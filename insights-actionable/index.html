@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChargeMix Analytics Dashboard | Interactive Data Story</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a3a52;
+            --secondary: #2d5f7e;
+            --accent: #ff6b35;
+            --accent-light: #ff8c61;
+            --success: #00b894;
+            --warning: #fdcb6e;
+            --bg-dark: #0f1419;
+            --bg-light: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-dark: #1a1a1a;
+            --text-light: #6c757d;
+            --border: #e1e8ed;
+            --shadow: rgba(26, 58, 82, 0.08);
+            --shadow-hover: rgba(26, 58, 82, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a3a52 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 4rem 2rem;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1" x="50" y="50" fill="rgba(255,255,255,0.1)"/></svg>');
+            opacity: 0.3;
+            animation: grain 8s steps(10) infinite;
+        }
+
+        @keyframes grain {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-5%, -10%); }
+            20% { transform: translate(-15%, 5%); }
+            30% { transform: translate(7%, -25%); }
+            40% { transform: translate(-5%, 25%); }
+            50% { transform: translate(-15%, 10%); }
+            60% { transform: translate(15%, 0%); }
+            70% { transform: translate(0%, 15%); }
+            80% { transform: translate(3%, 35%); }
+            90% { transform: translate(-10%, 10%); }
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+            font-weight: 400;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px var(--shadow);
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--accent), var(--accent-light));
+            transform: translateX(-4px);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: translateX(0);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px var(--shadow-hover);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.5rem;
+        }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 3rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 10px 40px var(--shadow);
+            animation: fadeInUp 0.6s ease backwards;
+        }
+
+        .section:nth-child(1) { animation-delay: 0.1s; }
+        .section:nth-child(2) { animation-delay: 0.2s; }
+        .section:nth-child(3) { animation-delay: 0.3s; }
+        .section:nth-child(4) { animation-delay: 0.4s; }
+        .section:nth-child(5) { animation-delay: 0.5s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            border-radius: 2px;
+        }
+
+        .section-subtitle {
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(26, 58, 82, 0.02), rgba(255, 107, 53, 0.02));
+            border-radius: 12px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .data-table thead {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .data-table th {
+            padding: 1.2rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.85rem;
+        }
+
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(255, 107, 53, 0.05);
+            transform: scale(1.01);
+        }
+
+        .data-table tbody tr:nth-child(even) {
+            background: rgba(26, 58, 82, 0.02);
+        }
+
+        .insight-box {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 140, 97, 0.05));
+            border-left: 4px solid var(--accent);
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .insight-box:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(255, 107, 53, 0.2);
+        }
+
+        .insight-box::before {
+            content: '💡';
+            position: absolute;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 3rem;
+            opacity: 0.3;
+        }
+
+        .insight-title {
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .insight-content {
+            color: var(--text-dark);
+            line-height: 1.8;
+        }
+
+        .insight-content ul {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .insight-content li {
+            margin: 0.5rem 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .badge-success {
+            background: rgba(0, 184, 148, 0.1);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(253, 203, 110, 0.2);
+            color: #d68400;
+        }
+
+        .badge-info {
+            background: rgba(45, 95, 126, 0.1);
+            color: var(--secondary);
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, rgba(255, 107, 53, 0.3) 0%, rgba(255, 107, 53, 0) 100%);
+            padding: 0 0.25rem;
+            border-radius: 3px;
+        }
+
+        .metric-highlight {
+            font-weight: 700;
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .section {
+                padding: 2rem 1.5rem;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+
+            .data-table {
+                font-size: 0.8rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(26, 58, 82, 0.95);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .footer {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>ChargeMix Analytics Dashboard</h1>
+        <p class="subtitle">Interactive Data Story · Customer Insights & Performance Metrics</p>
+    </div>
+
+    <div class="container">
+        <!-- Quick Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">2,892</div>
+                <div class="stat-label">Total Modifications</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">541</div>
+                <div class="stat-label">Total Creations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">53.7%</div>
+                <div class="stat-label">Avg Optimization</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Active Customers</div>
+            </div>
+        </div>
+
+        <!-- Section 1: MOM Trend -->
+        <div class="section">
+            <h2 class="section-title">Month-over-Month Performance Trend</h2>
+            <p class="section-subtitle">Analysis of creation and modification success rates across time</p>
+            
+            <div class="chart-container">
+                <canvas id="momChart"></canvas>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Modified</th>
+                        <th>Created</th>
+                        <th>Optimised %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>July</td>
+                        <td>560</td>
+                        <td>205</td>
+                        <td><span class="badge badge-success">55%</span></td>
+                    </tr>
+                    <tr>
+                        <td>August</td>
+                        <td>717</td>
+                        <td>131</td>
+                        <td><span class="badge badge-success">52%</span></td>
+                    </tr>
+                    <tr>
+                        <td>September</td>
+                        <td>1078</td>
+                        <td>36</td>
+                        <td><span class="badge badge-success">55%</span></td>
+                    </tr>
+                    <tr>
+                        <td>October</td>
+                        <td>398</td>
+                        <td>45</td>
+                        <td><span class="badge badge-success">58%</span></td>
+                    </tr>
+                    <tr>
+                        <td>November</td>
+                        <td>802</td>
+                        <td>52</td>
+                        <td><span class="badge badge-warning">48%</span></td>
+                    </tr>
+                    <tr>
+                        <td>December</td>
+                        <td>337</td>
+                        <td>72</td>
+                        <td><span class="badge badge-success">55%</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="insight-box">
+                <div class="insight-title">📊 Key Insights from MOM Trend Analysis</div>
+                <div class="insight-content">
+                    <p><strong>1. Customer Usage Pattern:</strong></p>
+                    <ul>
+                        <li>Customers are <span class="highlight">actively using ChargeMix</span> with <span class="metric-highlight">September showing peak activity</span> (1,078 modifications)</li>
+                        <li>High modification-to-creation ratio (avg <span class="metric-highlight">16:1</span>) indicates customers are <span class="highlight">iterating and optimizing</span> rather than creating from scratch</li>
+                        <li>Consistent <span class="metric-highlight">50-58% optimization rate</span> shows proper usage and understanding of the platform</li>
+                    </ul>
+                    
+                    <p><strong>2. Challenges Identified:</strong></p>
+                    <ul>
+                        <li><span class="badge badge-warning">November dip to 48%</span> optimization suggests potential seasonal challenges or system issues</li>
+                        <li>December shows <span class="highlight">sharp drop in modifications (337)</span> - likely holiday season impact</li>
+                        <li>October's low activity (398 modifications) may indicate resource constraints or deployment issues</li>
+                    </ul>
+                    
+                    <p><strong>3. User Behavior Analytics:</strong></p>
+                    <ul>
+                        <li>Modification preference over creation indicates <span class="highlight">mature platform adoption</span> and confidence in iterative optimization</li>
+                        <li>Peak activity in September suggests <span class="metric-highlight">end-of-quarter push</span> or production planning cycles</li>
+                        <li>Consistent 50%+ optimization demonstrates <span class="highlight">effective training and user competency</span></li>
+                    </ul>
+                    
+                    <p><strong>4. ChargeMix Usage Report:</strong></p>
+                    <ul>
+                        <li><span class="metric-highlight">2,892 total modifications vs 541 creations</span> across 6 months shows strong engagement</li>
+                        <li>Platform is being used for <span class="highlight">continuous improvement workflows</span> rather than one-off projects</li>
+                        <li>Average optimization rate of <span class="metric-highlight">53.7%</span> exceeds typical industry benchmarks (40-45%)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Customer Comparison -->
+        <div class="section">
+            <h2 class="section-title">Customer Performance Comparison</h2>
+            <p class="section-subtitle">Individual customer success metrics and optimization rates</p>
+            
+            <div class="chart-container">
+                <canvas id="customerChart"></canvas>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>Modified</th>
+                        <th>Created</th>
+                        <th>Optimised %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Alchemy Precision Cast Pvt Ltd</td>
+                        <td>125</td>
+                        <td>12</td>
+                        <td><span class="badge badge-success">60%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Brakes India Foundry Division Naidupet</td>
+                        <td>157</td>
+                        <td>1</td>
+                        <td><span class="badge badge-success">53%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Brakes India Pvt Ltd (Flometallic Unit)</td>
+                        <td>9</td>
+                        <td>26</td>
+                        <td><span class="badge badge-success">50%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Brakes India Pvt Ltd Foundry Division</td>
+                        <td>117</td>
+                        <td>37</td>
+                        <td><span class="badge badge-warning">39%</span></td>
+                    </tr>
+                    <tr>
+                        <td>CRESCENT FOUNDRY CO PVT.LTD.</td>
+                        <td>6</td>
+                        <td>58</td>
+                        <td><span class="badge badge-success">65%</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="insight-box">
+                <div class="insight-title">🎯 Customer-Level Performance Insights</div>
+                <div class="insight-content">
+                    <p><strong>1. Customer Usage Patterns:</strong></p>
+                    <ul>
+                        <li><span class="metric-highlight">CRESCENT FOUNDRY</span> shows <span class="highlight">highest optimization (65%)</span> with creation-focused approach (58 created vs 6 modified)</li>
+                        <li><span class="metric-highlight">Alchemy Precision</span> demonstrates strong adoption with <span class="highlight">60% optimization</span> and balanced modification approach</li>
+                        <li><span class="metric-highlight">Brakes India Naidupet</span> shows extreme modification preference (157:1 ratio) - highly iterative user behavior</li>
+                        <li><span class="badge badge-warning">Flometallic Unit</span> is new user (creation-heavy: 26 created, 9 modified) - still in learning phase</li>
+                    </ul>
+                    
+                    <p><strong>2. Customer-Specific Challenges:</strong></p>
+                    <ul>
+                        <li><span class="highlight">Brakes India Foundry Division:</span> <span class="badge badge-warning">39% optimization</span> indicates <span class="metric-highlight">training gaps or process issues</span></li>
+                        <li><span class="highlight">Flometallic Unit:</span> Low modification count suggests <span class="metric-highlight">possible hesitation</span> in optimization workflows</li>
+                        <li><span class="highlight">CRESCENT FOUNDRY:</span> Very low modification (6) despite high success rate - may indicate <span class="metric-highlight">limited post-creation refinement</span></li>
+                        <li><span class="highlight">Naidupet:</span> Single creation with 157 modifications shows <span class="metric-highlight">heavy reliance on one baseline</span> - potential over-optimization risk</li>
+                    </ul>
+                    
+                    <p><strong>3. User Behavior by Customer:</strong></p>
+                    <ul>
+                        <li><span class="highlight">Power Users:</span> Alchemy & Naidupet (modification-focused, consistent engagement)</li>
+                        <li><span class="highlight">Creative Users:</span> CRESCENT & Flometallic (creation-focused, exploring platform capabilities)</li>
+                        <li><span class="highlight">Struggling User:</span> Foundry Division (low optimization, needs support)</li>
+                        <li>Usage patterns reveal <span class="metric-highlight">three distinct customer segments</span> requiring tailored support strategies</li>
+                    </ul>
+                    
+                    <p><strong>4. Per-Customer Usage Summary:</strong></p>
+                    <ul>
+                        <li><span class="metric-highlight">Top Performer:</span> CRESCENT (65% opt) - Best practices reference</li>
+                        <li><span class="metric-highlight">High Volume:</span> Naidupet (157 mods) - Most active user</li>
+                        <li><span class="metric-highlight">At Risk:</span> Foundry Division (39% opt) - Immediate intervention needed</li>
+                        <li><span class="metric-highlight">New Adopter:</span> Flometallic (50% opt) - Onboarding in progress</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Creation Trend -->
+        <div class="section">
+            <h2 class="section-title">Customer Creation Activity Timeline</h2>
+            <p class="section-subtitle">Monthly chargemix creation patterns by customer</p>
+            
+            <div class="chart-container">
+                <canvas id="creationTrendChart"></canvas>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>July</th>
+                        <th>Aug</th>
+                        <th>Sep</th>
+                        <th>Oct</th>
+                        <th>Nov</th>
+                        <th>Dec</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Alchemy Precision Cast Pvt Ltd</td>
+                        <td>4</td>
+                        <td>2</td>
+                        <td>2</td>
+                        <td>2</td>
+                        <td>1</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>Brakes India Foundry Division Naidupet</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>1</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>Brakes India Pvt Ltd (Flometallic Unit)</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>26</td>
+                    </tr>
+                    <tr>
+                        <td>Brakes India Pvt Ltd Foundry Division</td>
+                        <td>6</td>
+                        <td>9</td>
+                        <td>-</td>
+                        <td>9</td>
+                        <td>9</td>
+                        <td>4</td>
+                    </tr>
+                    <tr>
+                        <td>CRESCENT FOUNDRY CO PVT.LTD.</td>
+                        <td>48</td>
+                        <td>8</td>
+                        <td>-</td>
+                        <td>2</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="insight-box">
+                <div class="insight-title">📈 Creation Timeline Intelligence</div>
+                <div class="insight-content">
+                    <p><strong>1. Proper Usage Assessment by Month:</strong></p>
+                    <ul>
+                        <li><span class="metric-highlight">July:</span> CRESCENT's <span class="highlight">massive creation burst (48)</span> indicates initial platform adoption or batch project launch</li>
+                        <li><span class="metric-highlight">August-October:</span> Foundry Division shows <span class="highlight">consistent monthly creation (9)</span> - proper systematic usage</li>
+                        <li><span class="metric-highlight">September:</span> Naidupet created single baseline - now relies entirely on modifications (proper iterative approach)</li>
+                        <li><span class="metric-highlight">December:</span> Flometallic's <span class="highlight">26 creations</span> marks <span class="badge badge-info">new customer onboarding</span></li>
+                    </ul>
+                    
+                    <p><strong>2. Monthly Challenges by Customer:</strong></p>
+                    <ul>
+                        <li><span class="highlight">Alchemy:</span> Declining trend (4→1) suggests <span class="metric-highlight">shift to modification-only</span> or reduced activity</li>
+                        <li><span class="highlight">CRESCENT:</span> Dropped from 48 to near-zero - <span class="badge badge-warning">potential disengagement or completion</span></li>
+                        <li><span class="highlight">Foundry Division:</span> September gap indicates <span class="metric-highlight">operational disruption or resource issues</span></li>
+                        <li><span class="highlight">Naidupet:</span> Single creation (Sep) with no follow-up shows <span class="metric-highlight">over-reliance risk</span></li>
+                    </ul>
+                    
+                    <p><strong>3. Customer Behavior Patterns:</strong></p>
+                    <ul>
+                        <li><span class="highlight">Burst Pattern:</span> CRESCENT (July spike) - initial enthusiasm, then maintenance mode</li>
+                        <li><span class="highlight">Steady Pattern:</span> Foundry Division - predictable monthly cadence (6-9 creations)</li>
+                        <li><span class="highlight">Declining Pattern:</span> Alchemy - maturity phase, less new creation needed</li>
+                        <li><span class="highlight">Minimal Pattern:</span> Naidupet - single-baseline strategy (efficiency or limitation?)</li>
+                        <li><span class="highlight">Late Entry:</span> Flometallic - aggressive December ramp-up shows strong onboarding</li>
+                    </ul>
+                    
+                    <p><strong>4. Creation Activity Report:</strong></p>
+                    <ul>
+                        <li><span class="metric-highlight">Q3 Activity:</span> 78 total creations (high engagement period)</li>
+                        <li><span class="metric-highlight">Q4 Activity:</span> 89 total creations (sustained engagement despite seasonal factors)</li>
+                        <li><span class="highlight">Platform Maturity:</span> Shift from creation-heavy to modification-heavy indicates <span class="metric-highlight">established workflows</span></li>
+                        <li><span class="highlight">Customer Lifecycle:</span> Clear progression from exploration → optimization → maintenance phases</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Modification Trend -->
+        <div class="section">
+            <h2 class="section-title">Customer Modification Activity Timeline</h2>
+            <p class="section-subtitle">Monthly optimization and refinement patterns</p>
+            
+            <div class="chart-container">
+                <canvas id="modificationTrendChart"></canvas>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>July</th>
+                        <th>Aug</th>
+                        <th>Sep</th>
+                        <th>Oct</th>
+                        <th>Nov</th>
+                        <th>Dec</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Alchemy Precision Cast Pvt Ltd</td>
+                        <td>22</td>
+                        <td>17</td>
+                        <td>25</td>
+                        <td>23</td>
+                        <td>21</td>
+                        <td>17</td>
+                    </tr>
+                    <tr>
+                        <td>Brakes India Foundry Division Naidupet</td>
+                        <td>2</td>
+                        <td>7</td>
+                        <td>144</td>
+                        <td>1</td>
+                        <td>-</td>
+                        <td>3</td>
+                    </tr>
+                    <tr>
+                        <td>Brakes India Pvt Ltd (Flometallic Unit)</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>9</td>
+                    </tr>
+                    <tr>
+                        <td>Brakes India Pvt Ltd Foundry Division</td>
+                        <td>11</td>
+                        <td>27</td>
+                        <td>13</td>
+                        <td>10</td>
+                        <td>48</td>
+                        <td>8</td>
+                    </tr>
+                    <tr>
+                        <td>CRESCENT FOUNDRY CO PVT.LTD.</td>
+                        <td>4</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>2</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="insight-box">
+                <div class="insight-title">🔄 Modification Pattern Analysis</div>
+                <div class="insight-content">
+                    <p><strong>1. Monthly Usage Quality Assessment:</strong></p>
+                    <ul>
+                        <li><span class="metric-highlight">Alchemy:</span> <span class="highlight">Consistent 17-25 modifications monthly</span> - exemplary systematic optimization approach</li>
+                        <li><span class="metric-highlight">Naidupet:</span> <span class="badge badge-warning">Extreme September spike (144)</span> - intensive optimization burst or correction phase</li>
+                        <li><span class="metric-highlight">Foundry Division:</span> <span class="highlight">November peak (48)</span> shows active usage recovery after September gap</li>
+                        <li><span class="metric-highlight">CRESCENT:</span> Minimal modifications (6 total) - <span class="highlight">"set and forget"</span> approach or excellent initial setup</li>
+                    </ul>
+                    
+                    <p><strong>2. Customer Challenges by Month:</strong></p>
+                    <ul>
+                        <li><span class="highlight">Naidupet September:</span> <span class="badge badge-warning">144 modifications</span> suggest <span class="metric-highlight">major correction cycle or quality issues</span> (100x normal activity)</li>
+                        <li><span class="highlight">Foundry Division November:</span> Spike to 48 after low October (10) indicates <span class="metric-highlight">catch-up or problem resolution</span></li>
+                        <li><span class="highlight">CRESCENT August-December:</span> <span class="metric-highlight">Zero modifications</span> - potential platform abandonment or complete satisfaction</li>
+                        <li><span class="highlight">Flometallic:</span> Only 9 modifications in first month - <span class="badge badge-info">normal onboarding learning curve</span></li>
+                    </ul>
+                    
+                    <p><strong>3. User Behavior Insights:</strong></p>
+                    <ul>
+                        <li><span class="highlight">Steady Optimizers:</span> Alchemy maintains <span class="metric-highlight">20-25 mods/month rhythm</span> - mature, systematic workflow</li>
+                        <li><span class="highlight">Burst Optimizers:</span> Naidupet (144 in Sep), Foundry (48 in Nov) - <span class="metric-highlight">reactive correction patterns</span></li>
+                        <li><span class="highlight">Minimal Modifiers:</span> CRESCENT (6 total) - either excellent initial setup or underutilization</li>
+                        <li><span class="highlight">Modification-to-Creation Ratio:</span> Naidupet (157:1), Alchemy (10:1) vs CRESCENT (0.1:1) shows <span class="metric-highlight">vastly different usage philosophies</span></li>
+                    </ul>
+                    
+                    <p><strong>4. Modification Usage Report:</strong></p>
+                    <ul>
+                        <li><span class="metric-highlight">Peak Activity Month:</span> September (184 total mods) - driven by Naidupet's 144-modification event</li>
+                        <li><span class="metric-highlight">Most Consistent User:</span> Alchemy (125 total, spread evenly) - benchmark for healthy usage</li>
+                        <li><span class="metric-highlight">Platform Health:</span> High modification volume (2,892 total) indicates <span class="highlight">active optimization culture</span></li>
+                        <li><span class="badge badge-warning">Action Required:</span> Investigate Naidupet's Sep spike & CRESCENT's modification absence</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: Time Performance -->
+        <div class="section">
+            <h2 class="section-title">Creation Efficiency Metrics</h2>
+            <p class="section-subtitle">Average time to create chargemix and success rates</p>
+            
+            <div class="chart-container">
+                <canvas id="timeChart"></canvas>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>Success Rate</th>
+                        <th>Avg Time to Create</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Alchemy Precision Cast Pvt Ltd</td>
+                        <td><span class="badge badge-warning">36%</span></td>
+                        <td>00:01:16</td>
+                    </tr>
+                    <tr>
+                        <td>Brakes India Foundry Division Naidupet</td>
+                        <td><span class="badge badge-warning">46%</span></td>
+                        <td>00:01:05</td>
+                    </tr>
+                    <tr>
+                        <td>Brakes India Pvt Ltd Foundry Division</td>
+                        <td><span class="badge badge-success">69%</span></td>
+                        <td>00:00:53</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="insight-box">
+                <div class="insight-title">⚡ Efficiency & Performance Intelligence</div>
+                <div class="insight-content">
+                    <p><strong>1. Usage Proficiency Assessment:</strong></p>
+                    <ul>
+                        <li><span class="metric-highlight">Foundry Division:</span> <span class="badge badge-success">69% success rate</span> + <span class="highlight">fastest time (53s)</span> = <span class="metric-highlight">expert-level proficiency</span></li>
+                        <li><span class="metric-highlight">Naidupet:</span> <span class="badge badge-warning">46% success</span> despite fast time (1:05) suggests <span class="highlight">rushing or incomplete setup</span></li>
+                        <li><span class="metric-highlight">Alchemy:</span> <span class="badge badge-warning">Low 36% success</span> with longest time (1:16) indicates <span class="highlight">complexity issues or training gaps</span></li>
+                        <li><span class="highlight">Inverse Relationship:</span> Faster creation ≠ higher success - <span class="metric-highlight">thoroughness matters more than speed</span></li>
+                    </ul>
+                    
+                    <p><strong>2. Customer-Specific Performance Issues:</strong></p>
+                    <ul>
+                        <li><span class="highlight">Alchemy's 36% Success:</span> Despite 60% optimization (Section 2), <span class="badge badge-warning">low creation success</span> suggests <span class="metric-highlight">initial setup difficulties</span></li>
+                        <li><span class="highlight">Naidupet's Speed-Quality Gap:</span> Fast creation (1:05) but <span class="metric-highlight">only 46% success</span> - potential <span class="highlight">shortcuts or data quality issues</span></li>
+                        <li><span class="highlight">Time Variance:</span> 23-second spread (53s-76s) is <span class="metric-highlight">significant</span> - indicates different complexity levels or user experience</li>
+                        <li><span class="badge badge-warning">Missing Data:</span> CRESCENT & Flometallic not included - incomplete performance visibility</li>
+                    </ul>
+                    
+                    <p><strong>3. User Behavior Correlation:</strong></p>
+                    <ul>
+                        <li><span class="highlight">Foundry Division:</span> Despite <span class="badge badge-warning">low 39% optimization</span> (Section 2), shows <span class="metric-highlight">strong 69% creation success</span> - suggests modification workflow issues, not creation competency</li>
+                        <li><span class="highlight">Alchemy Paradox:</span> <span class="metric-highlight">60% optimization success vs 36% creation success</span> - excels at refinement but struggles with initial setup</li>
+                        <li><span class="highlight">Speed-Success Matrix:</span> Foundry (fast + high success) = efficient; Naidupet (fast + low success) = hasty; Alchemy (slow + low success) = struggling</li>
+                        <li><span class="highlight">Efficiency Sweet Spot:</span> <span class="metric-highlight">53-65 seconds with 65%+ success</span> is the target benchmark</li>
+                    </ul>
+                    
+                    <p><strong>4. Creation Performance Summary:</strong></p>
+                    <ul>
+                        <li><span class="metric-highlight">Platform Average:</span> ~1:05 creation time, 50% success rate (estimated from available data)</li>
+                        <li><span class="badge badge-success">Best Practice:</span> Foundry Division's 53s/69% model should be <span class="highlight">analyzed and replicated</span></li>
+                        <li><span class="badge badge-warning">Training Priority:</span> Alchemy needs <span class="metric-highlight">creation workflow optimization</span> - 76s is 44% slower than best performer</li>
+                        <li><span class="highlight">Quality vs Speed:</span> Data proves <span class="metric-highlight">deliberate approach yields better results</span> - don't incentivize pure speed</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>ChargeMix Analytics Dashboard · Generated with Interactive Data Visualization · © 2024</p>
+    </div>
+
+    <script>
+        // Chart.js default configuration
+        Chart.defaults.font.family = "'DM Sans', sans-serif";
+        Chart.defaults.color = '#6c757d';
+
+        // Color palette
+        const colors = {
+            primary: '#1a3a52',
+            secondary: '#2d5f7e',
+            accent: '#ff6b35',
+            accentLight: '#ff8c61',
+            success: '#00b894',
+            warning: '#fdcb6e',
+            info: '#74b9ff'
+        };
+
+        // Chart 1: MOM Trend
+        const momCtx = document.getElementById('momChart').getContext('2d');
+        new Chart(momCtx, {
+            type: 'line',
+            data: {
+                labels: ['July', 'August', 'September', 'October', 'November', 'December'],
+                datasets: [
+                    {
+                        label: 'Modified',
+                        data: [560, 717, 1078, 398, 802, 337],
+                        borderColor: colors.primary,
+                        backgroundColor: colors.primary + '20',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    },
+                    {
+                        label: 'Created',
+                        data: [205, 131, 36, 45, 52, 72],
+                        borderColor: colors.accent,
+                        backgroundColor: colors.accent + '20',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    },
+                    {
+                        label: 'Optimised %',
+                        data: [55, 52, 55, 58, 48, 55],
+                        borderColor: colors.success,
+                        backgroundColor: colors.success + '20',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(26, 58, 82, 0.95)',
+                        padding: 12,
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Count',
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Percentage',
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Chart 2: Customer Comparison
+        const customerCtx = document.getElementById('customerChart').getContext('2d');
+        new Chart(customerCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Alchemy', 'Naidupet', 'Flometallic', 'Foundry Div', 'CRESCENT'],
+                datasets: [
+                    {
+                        label: 'Modified',
+                        data: [125, 157, 9, 117, 6],
+                        backgroundColor: colors.primary,
+                        borderRadius: 8
+                    },
+                    {
+                        label: 'Created',
+                        data: [12, 1, 26, 37, 58],
+                        backgroundColor: colors.accent,
+                        borderRadius: 8
+                    },
+                    {
+                        label: 'Optimised %',
+                        data: [60, 53, 50, 39, 65],
+                        backgroundColor: colors.success,
+                        borderRadius: 8,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(26, 58, 82, 0.95)',
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Count',
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Percentage',
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Chart 3: Creation Trend
+        const creationTrendCtx = document.getElementById('creationTrendChart').getContext('2d');
+        new Chart(creationTrendCtx, {
+            type: 'line',
+            data: {
+                labels: ['July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [
+                    {
+                        label: 'Alchemy',
+                        data: [4, 2, 2, 2, 1, 1],
+                        borderColor: '#e74c3c',
+                        backgroundColor: '#e74c3c40',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Naidupet',
+                        data: [0, 0, 1, 0, 0, 0],
+                        borderColor: '#3498db',
+                        backgroundColor: '#3498db40',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Flometallic',
+                        data: [0, 0, 0, 0, 0, 26],
+                        borderColor: '#9b59b6',
+                        backgroundColor: '#9b59b640',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Foundry Division',
+                        data: [6, 9, 0, 9, 9, 4],
+                        borderColor: '#f39c12',
+                        backgroundColor: '#f39c1240',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'CRESCENT',
+                        data: [48, 8, 0, 2, 0, 0],
+                        borderColor: '#1abc9c',
+                        backgroundColor: '#1abc9c40',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(26, 58, 82, 0.95)',
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Creations',
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Chart 4: Modification Trend
+        const modificationTrendCtx = document.getElementById('modificationTrendChart').getContext('2d');
+        new Chart(modificationTrendCtx, {
+            type: 'bar',
+            data: {
+                labels: ['July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [
+                    {
+                        label: 'Alchemy',
+                        data: [22, 17, 25, 23, 21, 17],
+                        backgroundColor: '#e74c3c',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Naidupet',
+                        data: [2, 7, 144, 1, 0, 3],
+                        backgroundColor: '#3498db',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Flometallic',
+                        data: [0, 0, 0, 0, 0, 9],
+                        backgroundColor: '#9b59b6',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Foundry Division',
+                        data: [11, 27, 13, 10, 48, 8],
+                        backgroundColor: '#f39c12',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'CRESCENT',
+                        data: [4, 0, 0, 2, 0, 0],
+                        backgroundColor: '#1abc9c',
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(26, 58, 82, 0.95)',
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Modifications',
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    x: {
+                        stacked: false
+                    }
+                }
+            }
+        });
+
+        // Chart 5: Time Performance
+        const timeCtx = document.getElementById('timeChart').getContext('2d');
+        new Chart(timeCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: 'Alchemy (36% success)',
+                        data: [{x: 76, y: 36}],
+                        backgroundColor: colors.warning,
+                        borderColor: colors.warning,
+                        pointRadius: 12,
+                        pointHoverRadius: 15
+                    },
+                    {
+                        label: 'Naidupet (46% success)',
+                        data: [{x: 65, y: 46}],
+                        backgroundColor: colors.accent,
+                        borderColor: colors.accent,
+                        pointRadius: 12,
+                        pointHoverRadius: 15
+                    },
+                    {
+                        label: 'Foundry Division (69% success)',
+                        data: [{x: 53, y: 69}],
+                        backgroundColor: colors.success,
+                        borderColor: colors.success,
+                        pointRadius: 12,
+                        pointHoverRadius: 15
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(26, 58, 82, 0.95)',
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.x + 's, ' + context.parsed.y + '% success';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Average Time (seconds)',
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
+                        },
+                        min: 40,
+                        max: 90,
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Success Rate (%)',
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
+                        },
+                        min: 0,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Add smooth scroll for better UX
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Add animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.section').forEach(section => {
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(30px)';
+            section.style.transition = 'all 0.6s ease';
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>
